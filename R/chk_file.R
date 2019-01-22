@@ -12,7 +12,7 @@ chk_file <- function(path){
     if (any(is.null(path), is.na(path), !is.character(path))){
         print('Please choose the excel file to import data...')
         path <- choose_file()
-    } else if (!exists(path)) { # we have to check if exists after passing the check for NULL OR NA as it produces errors if we check exists(NULL) or exists(NA)
+    } else if (!file.exists(path)) { # we have to check if exists after passing the check for NULL OR NA as it produces errors if we check exists(NULL) or exists(NA)
         print('The specified path for the excel file is not valid. Please choose a valid path for the excel file...')
         path <- choose_file()
     }

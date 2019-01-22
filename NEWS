@@ -1,3 +1,8 @@
+***TableOne, version 0.1.1 ***
+
+- added odds ratio column to the exported table.
+- fixed issue when you predefined the export.path argument with a valid path to an excel file and a false message that the path is not valid appeared.
+
 ***TableOne, version 0.1.0 ***
 
 - initial release on GitHub

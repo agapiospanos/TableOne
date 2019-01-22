@@ -4,9 +4,9 @@
 \alias{tableone}
 \title{Exports the table 1 in a word file}
 \usage{
-tableone(columns, var.names, percentages, group.col.name, control.value,
-  treatment.value, path = NULL, export.path = NULL, sheet = NULL,
-  tableone.col.names = NULL, export.filename = NULL)
+tableone(columns, var.names, percentages, or.display, group.col.name,
+  control.value, treatment.value, path = NULL, export.path = NULL,
+  sheet = NULL, tableone.col.names = NULL, export.filename = NULL)
 }
 \arguments{
 \item{columns}{(Character) the column names as specifed in the excel.}
@@ -14,6 +14,8 @@ tableone(columns, var.names, percentages, group.col.name, control.value,
 \item{var.names}{(Character) the variable names as they will be displayed in the output.}
 
 \item{percentages}{(Boolean) a vector of boolean values that specifies whether that exported variable value will be displayed in a \% format.}
+
+\item{or.display}{(Boolean) a vector of boolean values that specifies whether the Odds Ratio will be calculated for each variable.}
 
 \item{group.col.name}{(Character) the column name that specifies the group (control or treatment).}
 
@@ -27,7 +29,7 @@ tableone(columns, var.names, percentages, group.col.name, control.value,
 
 \item{sheet}{(Character) (optional) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.}
 
-\item{tableone.col.names}{(Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'Z-value', 'p-value')}
+\item{tableone.col.names}{(Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'Z-value', 'p-value', 'OR')}
 
 \item{export.filename}{(Character) (optional) the name of the file that will be exported. Do not include the .docx extension. (default filename is TableOne.docx)}
 }
