@@ -29,7 +29,7 @@ tableone(columns, var.names, percentages, or.display, group.col.name,
 
 \item{sheet}{(Character) (optional) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.}
 
-\item{tableone.col.names}{(Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'Z-value', 'p-value', 'OR')}
+\item{tableone.col.names}{(Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'z-value', 'p-value', 'OR')}
 
 \item{export.filename}{(Character) (optional) the name of the file that will be exported. Do not include the .docx extension. (default filename is TableOne.docx)}
 }

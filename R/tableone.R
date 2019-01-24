@@ -10,15 +10,15 @@
 #' @param path (Character) (optional) the path that the excel file can be read from. By default it is set to NULL so that a pop up window will ask for the path.
 #' @param export.path (Character) (optional) the path that the Word Document will be exported to.
 #' @param sheet (Character) (optional) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.
-#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'Z-value', 'p-value', 'OR')
+#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'z-value', 'p-value', 'OR')
 #' @param export.filename (Character) (optional) the name of the file that will be exported. Do not include the .docx extension. (default filename is TableOne.docx)
 #'
 #' @author
 #' Agapios Panos <panosagapios@gmail.com>
 #'
 #' @importFrom easycsv choose_dir
-#' @importFrom officer read_docx body_add_blocks block_list
-#' @importFrom flextable regulartable theme_vanilla
+#' @importFrom officer read_docx body_add_blocks block_list fp_border
+#' @importFrom flextable regulartable theme_zebra autofit vline vline_right align bold
 #' @importFrom stats sd t.test
 #' @export
 #'
@@ -60,7 +60,7 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
 
     # checking if the user specified custom column names for the exported table
     if (is.null(tableone.col.names)) {
-        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', '95% CI', 'Z-value', 'p-value', 'OR')
+        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', '95% CI', 'z-value', 'p-value', 'OR')
     } else {
         if (length(tableone.col.names) < 7) {
             stop('you must provide a vector with 7 column names for the argument tableone.col.names. Use " " inside the vector to keep empty column names')
@@ -126,10 +126,10 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
             or.value <- (c.no_events * t.events) / (t.no_events * c.events)
             var.log.or <- 1/c.no_events + 1/t.no_events + 1/t.events + 1/c.events
 
-            or.ci.lower <- log(or.value) - 1.96*sqrt(var.log.or)
-            or.ci.upper <- log(or.value) + 1.96*sqrt(var.log.or)
+            logor.ci.lower <- log(or.value) - 1.96*sqrt(var.log.or)
+            logor.ci.upper <- log(or.value) + 1.96*sqrt(var.log.or)
 
-            table.to.export[i,7] <- paste0(round(or.value, digits = 2), ' [', round(or.ci.lower, digits = 2), '-', round(or.ci.upper, digits = 2), ']')
+            table.to.export[i,7] <- paste0(round(or.value, digits = 2), ' [', round(exp(logor.ci.lower), digits = 2), '-', round(exp(logor.ci.upper), digits = 2), ']')
 
         } else {
 
@@ -144,11 +144,28 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
     # converting the data.frame to regulartable so that we can apply styling using a theme from flextable package
     output <- regulartable(table.to.export)
 
-    # adding the table to the document body
-    body_add_blocks(doc, blocks = block_list(output))
+    # auto-adjust width for table columns
+    output <- autofit(output, add_w = 0.2, add_h = 0)
 
     # applying the styling to the table
-    output <- theme_vanilla(output)
+    output <- theme_zebra(output, odd_header = "#CFCFCF", odd_body = "#F8F8F8",
+                even_header = "transparent", even_body = "transparent")
+
+    # adding vertical borders between columns
+    output <- vline( output, border = fp_border(color="gray80", width = 1), part = "all" )
+    # remove right table border
+    output <- vline_right(output, border = fp_border(width = 0), part = "all")
+    # align text to center
+    output <- align(output, align = "center", part = "all")
+    # align first column to right
+    output <- align(output, j = 1, align = "right", part = "body")
+    # make header bold
+    output <- bold(output, bold = TRUE, part = "header")
+    # make first column bold
+    output <- bold(output, j = 1, bold = TRUE, part = "body")
+
+    # adding the table to the document body
+    body_add_blocks(doc, blocks = block_list(output))
 
     # finaly exporting the docx file
     print(doc, target = paste0(export.path, '\\', export.filename, '.docx'))
