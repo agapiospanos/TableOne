@@ -1,34 +1,43 @@
 #' Exports the table 1 in a word file
 #'
-#' @param columns (Character) the column names as specifed in the excel.
-#' @param var.names (Character) the variable names as they will be displayed in the output.
-#' @param percentages (Boolean) a vector of boolean values that specifies whether that exported variable value will be displayed in a \% format.
-#' @param or.display (Boolean) a vector of boolean values that specifies whether the Odds Ratio will be calculated for each variable.
+#' @param excel.col.names (Character) the column names as specifed in the excel.
+#' @param output.var.names (Character) the variable names as they will be displayed in the output.
+#' @param dichotomous (Boolean) a vector of boolean values that specifies whether that exported variable value will be displayed in a \% format.
 #' @param group.col.name (Character) the column name that specifies the group (control or treatment).
 #' @param control.value (Character) the value that specifies the control group. (e.g. 0 or 'control').
 #' @param treatment.value (Character) the value that specifies the treatment group (e.g. 1 or 'treatment').
-#' @param path (Character) (optional) the path that the excel file can be read from. By default it is set to NULL so that a pop up window will ask for the path.
+#' @param excel.path (Character) (optional) the path that the excel file can be read from. By default it is set to NULL so that a pop up window will ask for the path.
 #' @param export.path (Character) (optional) the path that the Word Document will be exported to.
 #' @param sheet (Character) (optional) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.
-#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', '95\% CI', 'z-value', 'p-value', 'OR')
+#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'z-value', 'p-value', 'OR')
 #' @param export.filename (Character) (optional) the name of the file that will be exported. Do not include the .docx extension. (default filename is TableOne.docx)
 #'
 #' @author
 #' Agapios Panos <panosagapios@gmail.com>
 #'
 #' @importFrom easycsv choose_dir
-#' @importFrom officer read_docx body_add_blocks block_list fp_border
+#' @importFrom officer read_docx body_add_blocks block_list fp_border body_end_section_landscape
 #' @importFrom flextable regulartable theme_zebra autofit vline vline_right align bold
 #' @importFrom stats sd t.test
 #' @export
 #'
 
-tableone <- function(columns, var.names, percentages, or.display, group.col.name, control.value, treatment.value, path = NULL, export.path = NULL, sheet = NULL, tableone.col.names = NULL, export.filename = NULL) {
+tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.name, control.value, treatment.value, excel.path = NULL, export.path = NULL, sheet = NULL, tableone.col.names = NULL, export.filename = NULL) {
 
     # checking if the user specified an export.path argument. If not, a prompt window will be displayed to ask for a path.
     if (is.null(export.path)) {
         print('Please choose a folder to export the Word Document...')
         export.path <- choose_dir()
+    }
+
+    # checking if the user has supplied the correct amount of names for all variables
+    if (length(output.var.names) != length(excel.col.names)) {
+        stop("The length of the variables 'output.var.names' and 'excel.col.names' is not equal. Please make sure you have entered the same number of items in these vectors.")
+    }
+
+    # checking if the user specified dichotomous data for all variables
+    if (length(dichotomous) != length(excel.col.names)) {
+        stop('You have included ', length(excel.col.names), ' columns from the excel file but you specified the dichotomous argument for ', length(dichotomous), ' of them. You must provide a vector with T or F for each variable - column of the excel. For example dichotomous = c(T, F, T, F) if you have 4 columns.')
     }
 
     # checking if the export.path is specified
@@ -53,14 +62,33 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
     }
 
     # getting data from the excel file
-    excel_data <- import_excel(path, sheet, columns, var.names, group.col.name, control.value, treatment.value)
+    imported_data <- import_excel_data(excel.path, sheet, excel.col.names, output.var.names, group.col.name, control.value, treatment.value)
+
+    excel_data <- imported_data$data
+    group <- imported_data$group
+
+
+    # # initializing final subset which includes only the desired columns from the excel.
+    # subset <- data.frame(matrix(nrow = nrow(data), ncol = length(var.names)))
+    # # setting column names to the final data data.frame
+    # names(subset) <- var.names
 
     # initializing the data.frame that will be exported to Word
-    table.to.export <- data.frame( matrix( ncol = 7, nrow = length(var.names) ) )
+    table.to.export <- data.frame( matrix( ncol = 7, nrow = length(output.var.names) ) )
+
+    # keeping treatment and control group values in a separate var
+    treatment <- excel_data[which(group == treatment.value),]
+    control <- excel_data[which(group == control.value),]
+
+    # number of participants in the treatment group
+    n.t <- nrow(treatment)
+
+    # number of participants in the control group
+    n.c <- nrow(control)
 
     # checking if the user specified custom column names for the exported table
     if (is.null(tableone.col.names)) {
-        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', '95% CI', 'z-value', 'p-value', 'OR')
+        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'z-value', 'p-value', 'OR')
     } else {
         if (length(tableone.col.names) < 7) {
             stop('you must provide a vector with 7 column names for the argument tableone.col.names. Use " " inside the vector to keep empty column names')
@@ -68,60 +96,57 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
             tableone.col.names[which(tableone.col.names == '' | is.na(tableone.col.names))] <- ' '
         }
     }
+
+    # adding the number of participants in each group
+    tableone.col.names[2] <- paste0(tableone.col.names[2], ' (n=', n.t, ')')
+    tableone.col.names[3] <- paste0(tableone.col.names[3], ' (n=', n.c, ')')
+
+    # adding the names in table that will be exported
     names(table.to.export) <- tableone.col.names
 
-    # number of participants in the treatment group
-    n.t <- length(excel_data$treatment)
-
-    # number of participants in the control group
-    n.c <- length(excel_data$control)
-
     # generating the table that will be exported
-    for (i in 1:length(var.names)) {
-        if (percentages[i]) {
+    for (i in 1:length(output.var.names)) {
 
-            test.values <- t.test(unlist(excel_data$treatment[i]), unlist(excel_data$control[i]))
+        if (dichotomous[i]) {
 
-            # standard error of mean for control group
-            c.p.se <- round(sqrt((test.values$estimate[2]*(1-test.values$estimate[2]))/n.c), digits = 2)
+            # get data as factors for treatment group
+            t.factors <- table(treatment[i])
+            t.f1name <- names(t.factors[1])
+            t.f1count <- t.factors[1]
+            t.f2name <- names(t.factors[2])
+            t.f2count <- t.factors[2]
+            # t.f2name <- names(t.factors[2]) TODO remove
+            t.totalcount <- t.f1count + t.f2count
+            # t.f1percent <- t.f1count / t.totalcount TODO remove
+            t.f2percent <- t.f2count / t.totalcount
 
-            # standard error of mean for treatment group
-            t.p.se <- round(sqrt((test.values$estimate[1]*(1-test.values$estimate[1]))/n.t), digits = 2)
-
-            # creating the table columns
-            table.to.export[i,1] <- paste(var.names[i], '(%)')
-            table.to.export[i,2] <- paste0(round(test.values$estimate[1]*100, digits = 2), '% (', t.p.se, ')')
-            table.to.export[i,3] <- paste0(round(test.values$estimate[2]*100, digits = 2), '% (', c.p.se, ')')
-            table.to.export[i,4] <- paste0('[', round(test.values$conf.int[1], digits = 2), '-', round(test.values$conf.int[2], digits = 2), ']')
-            table.to.export[i,5] <- test.values$statistic
-            table.to.export[i,6] <- test.values$p.value
-
-        } else {
-
-            test.values <- t.test(unlist(excel_data$treatment[i]), unlist(excel_data$control[i]))
-
-            # standard deviation for control group
-            c.sd <- round(sd(unlist(excel_data$control[i])), digits = 2)
-
-            # standard deviation for the treatment group
-            t.sd <- round(sd(unlist(excel_data$treatment[i])), digits = 2)
+            # get data as factors for control group
+            c.factors <- table(control[i])
+            c.f1name <- names(c.factors[1])
+            c.f1count <- c.factors[1]
+            # c.f1name <- names(c.factors[1]) TODO remove
+            c.f2name <- names(c.factors[2])
+            c.f2count <- c.factors[2]
+            # c.f2name <- names(c.factors[2]) TODO remove
+            c.totalcount <- c.f1count + c.f2count
+            # c.f1percent <- c.f1count / c.totalcount TODO remove
+            c.f2percent <- c.f2count / c.totalcount
 
             # creating the table columns
-            table.to.export[i,1] <- var.names[i]
-            table.to.export[i,2] <- paste0(round(test.values$estimate[1], digits = 2), '\U00B1', t.sd)
-            table.to.export[i,3] <- paste0(round(test.values$estimate[2], digits = 2), '\U00B1', c.sd)
-            table.to.export[i,4] <- paste0('[', round(test.values$conf.int[1], digits = 2), '-', round(test.values$conf.int[2], digits = 2), ']')
-            table.to.export[i,5] <- test.values$statistic
-            table.to.export[i,6] <- test.values$p.value
-        }
+            # column name
+            # TODO IMPROVEMENT add the option to choose which factor to consider for every dichotomous var as the baseline.
+            if (output.var.names[i] == '') {
+                varname <- t.f2name # we get the 2nd factor's name because we use the 2nd factor as a baseline.
+            } else {
+                varname <- output.var.names[i]
+            }
 
-        # display odds ratio
-        if (or.display[i]) {
 
-            t.events <- length(which(unlist(excel_data$treatment[i]) == 1))
-            t.no_events <- length(which(unlist(excel_data$treatment[i]) == 0))
-            c.events <- length(which(unlist(excel_data$control[i]) == 1))
-            c.no_events <- length(which(unlist(excel_data$control[i]) == 0))
+            # calculate and display OR
+            t.events <- length(which(unlist(treatment[i]) == t.f2name)) # we use f2name because we have the 2nd factor as the baseline.
+            t.no_events <- length(which(unlist(treatment[i]) == t.f1name))
+            c.events <- length(which(unlist(control[i]) == c.f2name))
+            c.no_events <- length(which(unlist(control[i]) == c.f1name))
 
             or.value <- (c.no_events * t.events) / (t.no_events * c.events)
             var.log.or <- 1/c.no_events + 1/t.no_events + 1/t.events + 1/c.events
@@ -129,13 +154,64 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
             logor.ci.lower <- log(or.value) - 1.96*sqrt(var.log.or)
             logor.ci.upper <- log(or.value) + 1.96*sqrt(var.log.or)
 
+            zval <- round(log(or.value)/sqrt(var.log.or), digits = 3)
+
+            pval <- round(2*(1 - pnorm(zval)), digits = 3)
+
+            table.to.export[i,1] <- paste(varname, '(%)')
+            # treatment group value - percentage
+            table.to.export[i,2] <- paste0(round(t.f2percent*100, digits = 2), '%') # we use f2percent because we have the 2nd factor as the baseline.
+            # control group value - percentage
+            table.to.export[i,3] <- paste0(round(c.f2percent*100, digits = 2), '%')
+            # 95 percent confidence interval
+            table.to.export[i,4] <- ''
+            # z-value
+            table.to.export[i,5] <- zval
+            # p-value
+            table.to.export[i,6] <- pval
+            # odds ratio - 95 percent OR confidence interval
             table.to.export[i,7] <- paste0(round(or.value, digits = 2), ' [', round(exp(logor.ci.lower), digits = 2), '-', round(exp(logor.ci.upper), digits = 2), ']')
 
-        } else {
+        } else { # continuous data case
 
+            test.values <- t.test(unlist(excel_data[excel.col.names[i]])~unlist(group), excel_data)
+
+            # standard deviation for control group
+            c.sd <- round(sd(unlist(control[i])), digits = 2)
+
+            # standard deviation for the treatment group
+            t.sd <- round(sd(unlist(treatment[i])), digits = 2)
+
+            # mean for control group
+            c.mean <- test.values$estimate[1]
+
+            # mean for treatment group
+            t.mean <- test.values$estimate[2]
+
+            # mean difference
+            mean.difference <- t.mean - c.mean
+
+            # p-value
+            pval <- round(test.values$p.value, digits = 3)
+            if (pval < 0.001)
+                pval <- '<0.001'
+
+            # creating the table columns
+            # column name
+            table.to.export[i,1] <- output.var.names[i]
+            # treatment group value with standard deviation
+            table.to.export[i,2] <- paste0(round(t.mean, digits = 2), '\U00B1', t.sd)
+            # control group value with standard deviation
+            table.to.export[i,3] <- paste0(round(c.mean, digits = 2), '\U00B1', c.sd)
+            # mean difference with 95 percent confidence interval
+            table.to.export[i,4] <- paste0(round(mean.difference, digits = 2), ' [', round(test.values$conf.int[1], digits = 2), '-', round(test.values$conf.int[2], digits = 2), ']')
+            # z-value
+            table.to.export[i,5] <- round(test.values$statistic, digits = 3)
+            # p-value
+            table.to.export[i,6] <- pval
+            # leaving empty the odds ratio column
             table.to.export[i,7] <- ''
         }
-
     }
 
     # initializing a blank docx document
@@ -152,7 +228,7 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
                 even_header = "transparent", even_body = "transparent")
 
     # adding vertical borders between columns
-    output <- vline( output, border = fp_border(color="gray80", width = 1), part = "all" )
+    output <- vline( output, border = fp_border(color = "gray80", width = 1), part = "all" )
     # remove right table border
     output <- vline_right(output, border = fp_border(width = 0), part = "all")
     # align text to center
@@ -166,6 +242,9 @@ tableone <- function(columns, var.names, percentages, or.display, group.col.name
 
     # adding the table to the document body
     body_add_blocks(doc, blocks = block_list(output))
+
+    # make the orientation landscape
+    body_end_section_landscape(doc)
 
     # finaly exporting the docx file
     print(doc, target = paste0(export.path, '\\', export.filename, '.docx'))
