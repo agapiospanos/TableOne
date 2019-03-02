@@ -37,11 +37,11 @@ The basic function of this package has the following syntax:
 ```{r, eval=FALSE}
 library(TableOne)
 tableone(
-    columns = c('Age', 'Gender'), 
-    var.names = c('Age', 'Females'), 
-    percentages = c(FALSE, TRUE), 
-    group.col.name = 'TreatmentGroup', 
-    control.value = 0, 
-    treatment.value = 1
+  dichotomous = c(F, T, F, F, T),
+  group.col.name = 'hyperglycemia',
+  control.value = 0,
+  treatment.value = 1,
+  excel.col.names = c('age', 'gender', 'systbp', 'diastbp', 'hypertension'),
+  output.var.names = c('Age', 'Females', 'Systolic Blood Pressure', 'Diastolic Blood Pressure', 'Hypertension')
 )
 ```
