@@ -9,7 +9,7 @@
 #' @param excel.path (Character) (optional) the path that the excel file can be read from. By default it is set to NULL so that a pop up window will ask for the path.
 #' @param export.path (Character) (optional) the path that the Word Document will be exported to.
 #' @param sheet (Character) (optional) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.
-#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'z-value', 'p-value', 'OR')
+#' @param tableone.col.names (Character) (optional) a vector for the column names of the exported table. Default are: c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'OR', 'z-value', 'p-value')
 #' @param export.filename (Character) (optional) the name of the file that will be exported. Do not include the .docx extension. (default filename is TableOne.docx)
 #'
 #' @author
@@ -88,7 +88,7 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
 
     # checking if the user specified custom column names for the exported table
     if (is.null(tableone.col.names)) {
-        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'z-value', 'p-value', 'OR')
+        tableone.col.names <- c(' ', 'Treatment Group', 'Control Group', 'Mean Difference', 'OR', 'z-value', 'p-value')
     } else {
         if (length(tableone.col.names) < 7) {
             stop('you must provide a vector with 7 column names for the argument tableone.col.names. Use " " inside the vector to keep empty column names')
@@ -160,17 +160,18 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
 
             table.to.export[i,1] <- paste(varname, '(%)')
             # treatment group value - percentage
-            table.to.export[i,2] <- paste0(round(t.f2percent*100, digits = 2), '%') # we use f2percent because we have the 2nd factor as the baseline.
+            table.to.export[i,2] <- paste0(format(round(t.f2percent*100, digits = 2), nsmall = 2), '%') # we use f2percent because we have the 2nd factor as the baseline.
             # control group value - percentage
-            table.to.export[i,3] <- paste0(round(c.f2percent*100, digits = 2), '%')
-            # 95 percent confidence interval
+            table.to.export[i,3] <- paste0(format(round(c.f2percent*100, digits = 2), nsmall = 2), '%')
+            # mean difference with 95 percent confidence interval
             table.to.export[i,4] <- ''
-            # z-value
-            table.to.export[i,5] <- zval
-            # p-value
-            table.to.export[i,6] <- pval
             # odds ratio - 95 percent OR confidence interval
-            table.to.export[i,7] <- paste0(round(or.value, digits = 2), ' [', round(exp(logor.ci.lower), digits = 2), '-', round(exp(logor.ci.upper), digits = 2), ']')
+            table.to.export[i,5] <- paste0(format(round(or.value, digits = 2), nsmall = 2), ' [', format(round(exp(logor.ci.lower), digits = 2), nsmall = 2), ', ', format(round(exp(logor.ci.upper), digits = 2), nsmall = 2), ']')
+            # z-value
+            table.to.export[i,6] <- format(zval, nsmall = 3)
+            # p-value
+            table.to.export[i,7] <- format(pval, nsmall = 3)
+
 
         } else { # continuous data case
 
@@ -200,17 +201,18 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
             # column name
             table.to.export[i,1] <- output.var.names[i]
             # treatment group value with standard deviation
-            table.to.export[i,2] <- paste0(round(t.mean, digits = 2), '\U00B1', t.sd)
+            table.to.export[i,2] <- paste0(format(round(t.mean, digits = 2), nsmall = 2), '\U00B1', format(t.sd, nsmall = 2))
             # control group value with standard deviation
-            table.to.export[i,3] <- paste0(round(c.mean, digits = 2), '\U00B1', c.sd)
+            table.to.export[i,3] <- paste0(format(round(c.mean, digits = 2), nsmall = 2), '\U00B1', format(c.sd, nsmall = 2))
             # mean difference with 95 percent confidence interval
-            table.to.export[i,4] <- paste0(round(mean.difference, digits = 2), ' [', round(test.values$conf.int[1], digits = 2), '-', round(test.values$conf.int[2], digits = 2), ']')
-            # z-value
-            table.to.export[i,5] <- round(test.values$statistic, digits = 3)
-            # p-value
-            table.to.export[i,6] <- pval
+            table.to.export[i,4] <- paste0(format(round(mean.difference, digits = 2), nsmall = 2), ' [', format(round(test.values$conf.int[1], digits = 2), nsmall = 2), ', ', format(round(test.values$conf.int[2], digits = 2), nsmall = 2), ']')
             # leaving empty the odds ratio column
-            table.to.export[i,7] <- ''
+            table.to.export[i,5] <- ''
+            # z-value
+            table.to.export[i,6] <- format(round(test.values$statistic, digits = 3), nsmall = 3)
+            # p-value
+            table.to.export[i,7] <- format(pval, nsmall = 3)
+
         }
     }
 
@@ -225,7 +227,7 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
 
     # applying the styling to the table
     output <- theme_zebra(output, odd_header = "#CFCFCF", odd_body = "#F8F8F8",
-                even_header = "transparent", even_body = "transparent")
+                          even_header = "transparent", even_body = "transparent")
 
     # adding vertical borders between columns
     output <- vline( output, border = fp_border(color = "gray80", width = 1), part = "all" )
@@ -250,5 +252,5 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
     print(doc, target = paste0(export.path, '\\', export.filename, '.docx'))
 
     print('The file is exported successfully! You can find it in the following directory:')
-    print(paste0(export.path, export.filename, '.docx'))
+    print(paste0(export.path, '\\', export.filename, '.docx'))
 }
