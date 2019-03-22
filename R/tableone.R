@@ -2,7 +2,7 @@
 #'
 #' @param excel.col.names (Character) the column names as specifed in the excel.
 #' @param output.var.names (Character) the variable names as they will be displayed in the output.
-#' @param dichotomous (Boolean) a vector of boolean values that specifies whether that exported variable value will be displayed in a \% format.
+#' @param dichotomous (Character) a vector of characters values that specifies which of the excel columns contain dichotomous data.
 #' @param group.col.name (Character) the column name that specifies the group (control or treatment).
 #' @param control.value (Character) the value that specifies the control group. (e.g. 0 or 'control').
 #' @param treatment.value (Character) the value that specifies the treatment group (e.g. 1 or 'treatment').
@@ -33,11 +33,6 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
     # checking if the user has supplied the correct amount of names for all variables
     if (length(output.var.names) != length(excel.col.names)) {
         stop("The length of the variables 'output.var.names' and 'excel.col.names' is not equal. Please make sure you have entered the same number of items in these vectors.")
-    }
-
-    # checking if the user specified dichotomous data for all variables
-    if (length(dichotomous) != length(excel.col.names)) {
-        stop('You have included ', length(excel.col.names), ' columns from the excel file but you specified the dichotomous argument for ', length(dichotomous), ' of them. You must provide a vector with T or F for each variable - column of the excel. For example dichotomous = c(T, F, T, F) if you have 4 columns.')
     }
 
     # checking if the export.path is specified
@@ -105,9 +100,9 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
     names(table.to.export) <- tableone.col.names
 
     # generating the table that will be exported
-    for (i in 1:length(output.var.names)) {
+    for (i in 1:length(excel.col.names)) {
 
-        if (dichotomous[i]) {
+        if (excel.col.names[i] %in% dichotomous) {
 
             # get data as factors for treatment group
             t.factors <- table(treatment[i])
@@ -249,8 +244,8 @@ tableone <- function(excel.col.names, output.var.names, dichotomous, group.col.n
     body_end_section_landscape(doc)
 
     # finaly exporting the docx file
-    print(doc, target = paste0(export.path, '\\', export.filename, '.docx'))
+    print(doc, target = paste0(export.path, '/', export.filename, '.docx'))
 
     print('The file is exported successfully! You can find it in the following directory:')
-    print(paste0(export.path, '\\', export.filename, '.docx'))
+    print(paste0(export.path, '/', export.filename, '.docx'))
 }

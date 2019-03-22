@@ -14,7 +14,7 @@ tableone(excel.col.names, output.var.names, dichotomous, group.col.name,
 
 \item{output.var.names}{(Character) the variable names as they will be displayed in the output.}
 
-\item{dichotomous}{(Boolean) a vector of boolean values that specifies whether that exported variable value will be displayed in a \% format.}
+\item{dichotomous}{(Character) a vector of characters values that specifies which of the excel columns contain dichotomous data.}
 
 \item{group.col.name}{(Character) the column name that specifies the group (control or treatment).}
 
