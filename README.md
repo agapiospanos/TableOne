@@ -35,7 +35,7 @@ The basic function of this package has the following syntax:
 ``` r
 library(TableOne)
 tableone(
-  dichotomous = c(F, T, F, F, T),
+  dichotomous = c('gender', 'hypertension'),
   group.col.name = 'hyperglycemia',
   control.value = 0,
   treatment.value = 1,
