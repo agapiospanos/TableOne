@@ -2,7 +2,7 @@
 #'
 #' @param path (Character) the path that the excel file can be read from. By default it is set to NULL so that a pop up window will ask for the path.
 #' @param sheet (Character) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.
-#' @param excel.col.name (Character) the column names as specifed in the excel.
+#' @param import.col.names (Character) the column names as specifed in the excel.
 #' @param output.var.names (Character) the variable names as they will be displayed in the output.
 #' @param group.col.name (Character) the column name that specifies the group (control or treatment)
 #' @param control.value (Character) the value that specifies the control group. (e.g. 0 or 'control')
@@ -15,7 +15,7 @@
 #' @importFrom readxl read_excel
 #' @export
 
-import_excel_data <- function(path = NULL, sheet = NULL, excel.col.name, output.var.names, group.col.name, control.value, treatment.value){
+import_excel_data <- function(path = NULL, sheet = NULL, import.col.names, output.var.names, group.col.name, control.value, treatment.value){
 
     # check the imported file for its extension and display file choose window in case the path variable is NULL
     path <- chk_file(path)
@@ -28,21 +28,21 @@ import_excel_data <- function(path = NULL, sheet = NULL, excel.col.name, output.
         stop('The name "', group.col.name, '" that you specified in argument group.col.name does not exist in the excel file you loaded.')
     }
 
-    # checking if the columns specified in the excel.col.name variable exist in the excel
-    colnames.verification <- excel.col.name %in% names(data)
+    # checking if the columns specified in the import.col.names variable exist in the excel
+    colnames.verification <- import.col.names %in% names(data)
     if (!any(colnames.verification)) {
         unmatched.pos <- which(colnames.verification == F)
-        stop('The columns ', excel.col.name[unmatched.pos], ' are not present in the excel file that you loaded.')
+        stop('The columns ', import.col.names[unmatched.pos], ' are not present in the excel file that you loaded.')
     }
 
     # initializing final subset which includes only the desired columns from the excel.
     subset <- data.frame(matrix(nrow = nrow(data), ncol = length(output.var.names)))
     # setting column names to the final data data.frame
-    names(subset) <- excel.col.name
+    names(subset) <- import.col.names
 
     # adding the desired data to subset data.frame
-    for (i in 1:length(excel.col.name)) {
-        subset[i] <- data[excel.col.name[i]]
+    for (i in 1:length(import.col.names)) {
+        subset[i] <- data[import.col.names[i]]
     }
 
     # initialize a grouping column

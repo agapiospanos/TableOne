@@ -1,3 +1,18 @@
+***TableOne, version 0.2.2 ***
+
+- added conversion to numbers for continuous data that are stored as characters/strings in the excel file
+
+***TableOne, version 0.2.1 ***
+
+- added continuity correction for dichotomous data
+- added option to load data from data.frame directly instead of excel file
+
+***TableOne, version 0.2.0 ***
+
+- added support for ordinal data
+- added median and IQR statistics option for continuous data
+- fixed bug that produced p-values > 1
+
 ***TableOne, version 0.1.5 ***
 
 - changed dichotomous argument from boolean to character vector

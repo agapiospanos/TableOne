@@ -4,7 +4,7 @@
 \alias{import_excel_data}
 \title{Imports the data from the excel file}
 \usage{
-import_excel_data(path = NULL, sheet = NULL, excel.col.name,
+import_excel_data(path = NULL, sheet = NULL, import.col.names,
   output.var.names, group.col.name, control.value, treatment.value)
 }
 \arguments{
@@ -12,7 +12,7 @@ import_excel_data(path = NULL, sheet = NULL, excel.col.name,
 
 \item{sheet}{(Character) (default: NULL) the sheet inside excel file that the data are stored. By default it gets the first one.}
 
-\item{excel.col.name}{(Character) the column names as specifed in the excel.}
+\item{import.col.names}{(Character) the column names as specifed in the excel.}
 
 \item{output.var.names}{(Character) the variable names as they will be displayed in the output.}
 

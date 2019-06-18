@@ -1,13 +1,13 @@
 Package: TableOne
 Type: Package
 Title: TableOne: Exporting Description Table For Meta-Analysis Articles
-Version: 0.1.5
+Version: 0.2.2
 Authors@R: person("Agapios", "Panos", role = c("aut", "cre"), email = "panosagapios@gmail.com")
 Maintainer: Agapios Panos <panosagapios@gmail.com>
 Description: A package that allows for easy export of the common descriptive table 1 for articles of meta-analysis. 
     The package imports data from an excel file and exports the data in a table inside a word document so that the authors 
     can easily integrate the table to their article.
-Date: 2019-03-23
+Date: 2019-06-18
 Depends: R (>= 3.0.0)
 Imports: readxl (>= 1.1.0), easycsv (>= 1.0.8), officer (>= 0.3.2), flextable (>= 0.4.6)
 Encoding: UTF-8
