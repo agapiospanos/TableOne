@@ -23,7 +23,7 @@
 #' @importFrom easycsv choose_dir
 #' @importFrom officer read_docx body_add_blocks block_list fp_border body_end_section_landscape body_add_par
 #' @importFrom flextable regulartable theme_zebra autofit vline vline_right align bold
-#' @importFrom stats sd t.test
+#' @importFrom stats sd t.test pnorm chisq.test quantile median
 #' @export
 #'
 
@@ -122,6 +122,9 @@ tableone <- function(import.col.names, output.var.names, dichotomous = c(), ordi
     # variable to check if continuity correction is applied to add note
     continuity_correction <- F
 
+    # keep a vector of the vars for which we applied continuity correction
+    continuity_correction_vars <- c()
+
     # checking if the user specified custom column names for the exported table
     if (is.null(tableone.col.names)) {
         tableone.col.names <- c('Variable', 'Treatment Group', 'Control Group', 'p-value')
@@ -205,6 +208,7 @@ tableone <- function(import.col.names, output.var.names, dichotomous = c(), ordi
                 t.no_events = t.no_events + 0.5
                 c.no_events = c.no_events + 0.5
                 continuity_correction = T
+                continuity_correction_vars <- cbind(continuity_correction_vars, varname)
             }
 
             or.value <- (c.no_events * t.events) / (t.no_events * c.events)
@@ -391,7 +395,7 @@ tableone <- function(import.col.names, output.var.names, dichotomous = c(), ordi
         body_add_blocks(doc, blocks = block_list(output))
 
         # adding note for continuity correction if applied
-        if (continuity_correction) body_add_par(doc, value = 'Note: Continuity correction was applied', style = "centered")
+        if (continuity_correction) body_add_par(doc, value = paste('Note: Continuity correction was applied for the variables: ', paste(continuity_correction_vars, collapse = ', ')), style = "centered")
 
         # make the orientation landscape
         body_end_section_landscape(doc)
@@ -404,12 +408,13 @@ tableone <- function(import.col.names, output.var.names, dichotomous = c(), ordi
     }
 
     print('Here is the table one in a data.frame format:')
-    if (continuity_correction) print('Note: Continuity correction was applied')
+    if (continuity_correction) print(paste('Note: Continuity correction was applied for the variables: ', paste(continuity_correction_vars, collapse = ', ')))
     print(table.to.export)
 
     output <- list()
     output$table <- table.to.export
     output$continuity_correction <- continuity_correction
+    output$continuity_correction_vars <- continuity_correction_vars
 
     return(output)
 }
